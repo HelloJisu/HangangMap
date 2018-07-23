@@ -1,0 +1,490 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script
+	src="http://maps.google.com/maps/api/js?key=AIzaSyBf1DzGDRkXHBVpRC8oPDlQWHqiO1ApSqM">
+	
+</script>
+
+<link rel="stylesheet"
+	href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" />
+<script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+<!--  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script> -->
+<script
+	src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
+<link rel="stylesheet" href="3611.css" type="text/css">
+<title>다양한 이미지 마커 표시하기</title>
+
+</head>
+<body>
+	<!-- 표지 -->
+	<div id="cover_close"
+		onclick="document.getElementById('cover_close').style.display = 'none';"
+		style="cursor: pointer;">
+		<img id="bgImg" src="bg_img.png"> <img id="fgImg"
+			src="fg_img.png">
+	</div>
+	<!-- 헤더 -->
+	<div data-role="header"
+		style="background: #F0957D; color: #ffffff; text-align: center; text-valign: middle; height: 25px; font-size: 15pt; padding: 20px; border: 0px;">한강공원
+		정복하기</div>
+
+	<div id="mapwrap">
+		<!-- 지도가 표시될 div -->
+		<div id="map" style="width: 100%; height: 100%;"></div>
+		<!-- 지도 위에 표시될 마커 카테고리 -->
+		<div class="category">
+			<ul>
+				<li id="coffeeMenu" onclick="changeMarker('coffee')"><span
+					class="ico_comm ico_coffee"></span> 대여소</li>
+				<li id="storeMenu" onclick="changeMarker('store')"><span
+					class="ico_comm ico_store"></span> 보행도로</li>
+				<li id="carparkMenu" onclick="changeMarker('carpark')"><span
+					class="ico_comm ico_carpark"></span> 주차장</li>
+				<li id="waterMenu" onclick="changeMarker('water')"><span
+					class="ico_comm ico_water"></span> 식수대</li>
+				<li id="foodMenu" onclick="changeMarker('food')"><span
+					class="ico_comm ico_food"></span> 매점</li>
+			</ul>
+		</div>
+	</div>
+
+	<script type="text/javascript"
+		src="//dapi.kakao.com/v2/maps/sdk.js?appkey=3a90552f387aa5d0e72889bcd2b11dc2"></script>
+	<script>
+		var mapContainer = document.getElementById('map'), // 지도를 표시할 div  
+		mapOption = {
+			center : new daum.maps.LatLng(37.526327, 126.933581), // 지도의 중심좌표 
+			level : 8
+		// 지도의 확대 레벨 
+		};
+
+		var map = new daum.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+		
+		//자전거대여소
+		function bike() {
+			//리스트 부분
+			var url = "http://openAPI.seoul.go.kr:8088/5961677355646277373056596a5877/json/GeoInfoBicycleLendWGS/1/5  ";
+			$.getJSON(url, updatebikeLibrary);
+
+			var newScriptElement = document.createElement("script");
+			newScriptElement.setAttribute("src", url);
+
+			/*jsonp를 사용하여 스크립트 정보를 갱신*/
+			newScriptElement.setAttribute("id", "jsonp");
+			var oldScriptElement = document.getElementById("jsonp");
+			var head = document.getElementsByTagName("head")[0];
+			if (oldScriptElement == null) {
+				head.appendChild(newScriptElement);
+			} else {
+				head.replaceChild(newScriptElement, oldScriptElement);
+			}
+		}//handleRefresh
+		function updatebikeLibrary(librarys) {//16번 호출
+			var bikeres = new Array();
+			var bikelib = librarys.GeoInfoBicycleLendWGS.row;
+			for (var i = 0; i < bikelib.length; i++) {
+				var blib = bikelib[i];
+				var bikeloc = {//open API의 값들 위도와 경도
+					latitude : blib.LAT,
+					longitude : blib.LNG
+				};
+				bikeres[i] = bikeloc;
+				console.log(bikeres[i]);
+			}
+			createCoffeeMarkers(bikeres);
+		}
+		
+		//물
+		function water() {
+			//리스트 부분
+			var url = "http://openAPI.seoul.go.kr:8088/5961677355646277373056596a5877/json/GeoInfoDrinkWaterWGS/1/5  ";
+			$.getJSON(url, updatewaterLibrary);
+
+			var newScriptElement = document.createElement("script");
+			newScriptElement.setAttribute("src", url);
+
+			/*jsonp를 사용하여 스크립트 정보를 갱신*/
+			newScriptElement.setAttribute("id", "jsonp");
+			var oldScriptElement = document.getElementById("jsonp");
+			var head = document.getElementsByTagName("head")[0];
+			if (oldScriptElement == null) {
+				head.appendChild(newScriptElement);
+			} else {
+				head.replaceChild(newScriptElement, oldScriptElement);
+			}
+		}//handleRefresh
+		function updatewaterLibrary(librarys) {//16번 호출
+			var waterres = new Array();
+			var waterlib = librarys.GeoInfoDrinkWaterWGS.row;
+			for (var i = 0; i < waterlib.length; i++) {
+				var wlib = waterlib[i];
+				var waterloc = {//open API의 값들 위도와 경도
+					latitude : wlib.LAT,
+					longitude : wlib.LNG
+				};
+				waterres[i] = waterloc;
+				console.log(waterres[i]);
+			}
+			createWaterMarkers(waterres);
+		}
+		
+		function road() {
+			//리스트 부분
+			var url = "http://openAPI.seoul.go.kr:8088/5961677355646277373056596a5877/json/GeoInfoWorkRoadWGS/1/5";
+			$.getJSON(url, updateroadLibrary);
+
+			var newScriptElement = document.createElement("script");
+			newScriptElement.setAttribute("src", url);
+
+			/*jsonp를 사용하여 스크립트 정보를 갱신*/
+			newScriptElement.setAttribute("id", "jsonp");
+			var oldScriptElement = document.getElementById("jsonp");
+			var head = document.getElementsByTagName("head")[0];
+			if (oldScriptElement == null) {
+				head.appendChild(newScriptElement);
+			} else {
+				head.replaceChild(newScriptElement, oldScriptElement);
+			}
+		}//handleRefresh
+		function updateroadLibrary(librarys) {//16번 호출
+			var roadres = new Array();
+			var roadlib = librarys.GeoInfoWorkRoadWGS.row;
+			for (var i = 0; i < roadlib.length; i++) {
+				var rlib = roadlib[i];
+				var roadloc = {//open API의 값들 위도와 경도
+					latitude : rlib.LAT,
+					longitude : rlib.LNG
+				};
+				roadres[i] = roadloc;
+				console.log(roadres[i]);
+			}
+			createStoreMarkers(roadres);
+		}
+		
+		function parking() {
+			//리스트 부분
+			var url = "http://openAPI.seoul.go.kr:8088/5961677355646277373056596a5877/json/GeoInfoParkParkingWGS/1/5 ";
+			$.getJSON(url, updateparkingLibrary);
+
+			var newScriptElement = document.createElement("script");
+			newScriptElement.setAttribute("src", url);
+
+			/*jsonp를 사용하여 스크립트 정보를 갱신*/
+			newScriptElement.setAttribute("id", "jsonp");
+			var oldScriptElement = document.getElementById("jsonp");
+			var head = document.getElementsByTagName("head")[0];
+			if (oldScriptElement == null) {
+				head.appendChild(newScriptElement);
+			} else {
+				head.replaceChild(newScriptElement, oldScriptElement);
+			}
+		}//handleRefresh
+		function updateparkingLibrary(librarys) {
+			var parkingres = new Array();
+			var parkinglib = librarys.GeoInfoParkParkingWGS.row;
+			for (var i = 0; i < parkinglib.length; i++) {
+				var plib = parkinglib[i];
+				var parkingloc = {//open API의 값들 위도와 경도
+					latitude : plib.LAT,
+					longitude : plib.LNG
+				};
+				parkingres[i] = parkingloc;
+				console.log(parkingres[i]);
+			}
+			createCarparkMarkers(parkingres);
+		}
+		
+		
+		//매점
+		function food() {
+			//리스트 부분
+			var url = "http://openAPI.seoul.go.kr:8088/5961677355646277373056596a5877/json/GeoInfoStoreWGS/1/5";
+			$.getJSON(url, updatefoodLibrary);
+
+			var newScriptElement = document.createElement("script");
+			newScriptElement.setAttribute("src", url);
+
+			/*jsonp를 사용하여 스크립트 정보를 갱신*/
+			newScriptElement.setAttribute("id", "jsonp");
+			var oldScriptElement = document.getElementById("jsonp");
+			var head = document.getElementsByTagName("head")[0];
+			if (oldScriptElement == null) {
+				head.appendChild(newScriptElement);
+			} else {
+				head.replaceChild(newScriptElement, oldScriptElement);
+			}
+		}//handleRefresh
+		function updatefoodLibrary(librarys) {//16번 호출
+			var foodres = new Array();
+			var foodlib = librarys.GeoInfoStoreWGS.row;
+			for (var i = 0; i < foodlib.length; i++) {
+				var flib = foodlib[i];
+				var foodloc = {//open API의 값들 위도와 경도
+					latitude : flib.LAT,
+					longitude : flib.LNG
+				};
+				foodres[i] = foodloc;
+				console.log(foodres[i]);
+			}
+			createFoodMarkers(foodres);
+		}
+		
+		bike();
+		water();
+		road();
+		parking();
+		food();
+		
+		
+		var markerImageSrc = 'category.png'; // 마커이미지의 주소입니다. 스프라이트 이미지 입니다
+		coffeeMarkers = [], // 자전거 마커 객체를 가지고 있을 배열입니다
+		storeMarkers = [], // 보행도로 마커 객체를 가지고 있을 배열입니다
+		carparkMarkers = []; // 주차장 마커 객체를 가지고 있을 배열입니다
+		waterMarkers = []; //물 마커 객체를 가지고 있을 배열
+		foodMarkers = []; //매점 마커 객체를 가지고 있을 배열
+
+		// 마커이미지의 주소와, 크기, 옵션으로 마커 이미지를 생성하여 리턴하는 함수입니다
+		function createMarkerImage(src, size, options) {
+			var markerImage = new daum.maps.MarkerImage(src, size, options);
+			return markerImage;
+		}
+
+		// 좌표와 마커이미지를 받아 마커를 생성하여 리턴하는 함수입니다
+		function createMarker(latitude, longitude, image) {
+			var markerPosition = new daum.maps.LatLng(latitude, longitude);
+			var marker = new daum.maps.Marker({
+				position : markerPosition,
+				image : image
+			});
+
+			return marker;
+		}
+
+		// 자전거 마커를 생성하고 자전거 마커 배열에 추가하는 함수입니다
+		function createCoffeeMarkers(bikeres) {
+
+			for (var i = 0; i < bikeres.length; i++) {
+
+				var imageSize = new daum.maps.Size(22, 26), imageOptions = {
+					spriteOrigin : new daum.maps.Point(10, 0),
+					spriteSize : new daum.maps.Size(36, 170)
+				};
+
+				// 마커이미지와 마커를 생성합니다
+				var markerImage = createMarkerImage(markerImageSrc, imageSize,
+						imageOptions), 
+						marker = createMarker(bikeres[i].latitude,bikeres[i].longitude, markerImage);
+
+				// 생성된 마커를 커피숍 마커 배열에 추가합니다
+				coffeeMarkers.push(marker);
+			}
+		}
+
+		// 자전거 마커가 표시될 좌표 배열입니다
+
+		// 자전거 마커들의 지도 표시 여부를 설정하는 함수입니다
+		function setCoffeeMarkers(map) {
+			for (var i = 0; i < coffeeMarkers.length; i++) {
+				coffeeMarkers[i].setMap(map);
+			}
+		}
+
+		// 보행도로 마커를 생성하고 보행도로 마커 배열에 추가하는 함수입니다
+		function createStoreMarkers(roadres) {
+			for (var i = 0; i < roadres.length; i++) {
+
+				var imageSize = new daum.maps.Size(22, 26), imageOptions = {
+					spriteOrigin : new daum.maps.Point(10, 36),
+					spriteSize : new daum.maps.Size(36, 170)
+				};
+
+				// 마커이미지와 마커를 생성합니다
+				var markerImage = createMarkerImage(markerImageSrc, imageSize,imageOptions), 
+						marker = createMarker(roadres[i].latitude,roadres[i].longitude, markerImage);
+
+				// 생성된 마커를 편의점 마커 배열에 추가합니다
+				storeMarkers.push(marker);
+			}
+		}
+
+		// 보행도로 마커들의 지도 표시 여부를 설정하는 함수입니다
+		function setStoreMarkers(map) {
+			for (var i = 0; i < storeMarkers.length; i++) {
+				storeMarkers[i].setMap(map);
+			}
+		}
+
+		// 주차장 마커를 생성하고 주차장 마커 배열에 추가하는 함수입니다
+		function createCarparkMarkers(parkingres) {
+			for (var i = 0; i < parkingres.length; i++) {
+
+				var imageSize = new daum.maps.Size(22, 26), imageOptions = {
+					spriteOrigin : new daum.maps.Point(10, 72),
+					spriteSize : new daum.maps.Size(36, 170)
+				};
+
+				// 마커이미지와 마커를 생성합니다
+				var markerImage = createMarkerImage(markerImageSrc, imageSize,
+						imageOptions), 
+						marker = createMarker(parkingres[i].latitude,parkingres[i].longitude, markerImage);
+
+				// 생성된 마커를 주차장 마커 배열에 추가합니다
+				carparkMarkers.push(marker);
+			}
+		}
+
+		// 주차장 마커들의 지도 표시 여부를 설정하는 함수입니다
+		function setCarparkMarkers(map) {
+			for (var i = 0; i < carparkMarkers.length; i++) {
+				carparkMarkers[i].setMap(map);
+			}
+		}
+		
+		function createWaterMarkers(waterres) {
+			for (var i = 0; i < waterres.length; i++) {
+
+				var imageSize = new daum.maps.Size(22, 26), imageOptions = {
+					spriteOrigin : new daum.maps.Point(10, 108),
+					spriteSize : new daum.maps.Size(36, 170)
+				};
+
+				// 마커이미지와 마커를 생성합니다
+				var markerImage = createMarkerImage(markerImageSrc, imageSize,
+						imageOptions), 
+						marker = createMarker(waterres[i].latitude,waterres[i].longitude,markerImage);
+
+				// 생성된 마커를 편의점 마커 배열에 추가합니다
+				waterMarkers.push(marker);
+			}
+		}
+
+		// 편의점 마커들의 지도 표시 여부를 설정하는 함수입니다
+		function setWaterMarkers(map) {
+			for (var i = 0; i < storeMarkers.length; i++) {
+				waterMarkers[i].setMap(map);
+			}
+		}
+		
+		function createFoodMarkers(foodres) {
+			for (var i = 0; i < foodres.length; i++) {
+
+				var imageSize = new daum.maps.Size(22, 26), imageOptions = {
+					spriteOrigin : new daum.maps.Point(10, 144),
+					spriteSize : new daum.maps.Size(36, 170)
+				};
+
+				// 마커이미지와 마커를 생성합니다
+				var markerImage = createMarkerImage(markerImageSrc, imageSize,
+						imageOptions), marker = createMarker(foodres[i].latitude,foodres[i].longitude,
+						markerImage);
+
+				// 생성된 마커를 편의점 마커 배열에 추가합니다
+				foodMarkers.push(marker);
+			}
+		}
+
+		// 편의점 마커들의 지도 표시 여부를 설정하는 함수입니다
+		function setFoodMarkers(map) {
+			for (var i = 0; i < storeMarkers.length; i++) {
+				foodMarkers[i].setMap(map);
+			}
+		}
+
+		// 카테고리를 클릭했을 때 type에 따라 카테고리의 스타일과 지도에 표시되는 마커를 변경합니다
+		function changeMarker(type) {
+
+			var coffeeMenu = document.getElementById('coffeeMenu');
+			var storeMenu = document.getElementById('storeMenu');
+			var carparkMenu = document.getElementById('carparkMenu');
+			var waterMenu = document.getElementById('waterMenu');
+			var foodMenu = document.getElementById('foodMenu');
+
+			// 커피숍 카테고리가 클릭됐을 때
+			if (type === 'coffee') {
+
+				// 커피숍 카테고리를 선택된 스타일로 변경하고
+				coffeeMenu.className = 'menu_selected';
+				storeMenu.className = '';
+				carparkMenu.className = '';
+				waterMenu.className = '';
+				foodMenu.className = '';
+
+				// 커피숍 마커들만 지도에 표시하도록 설정합니다
+				setCoffeeMarkers(map);
+				setStoreMarkers(null);
+				setCarparkMarkers(null);
+				setWaterMarkers(null);
+				setFoodMarkers(null);
+
+			} else if (type === 'store') { // 편의점 카테고리가 클릭됐을 때
+
+				// 편의점 카테고리를 선택된 스타일로 변경하고
+				coffeeMenu.className = '';
+				storeMenu.className = 'menu_selected';
+				carparkMenu.className = '';
+				waterMenu.className = '';
+				foodMenu.className = '';
+
+				// 편의점 마커들만 지도에 표시하도록 설정합니다
+				setCoffeeMarkers(null);
+				setStoreMarkers(map);
+				setCarparkMarkers(null);
+				setWaterMarkers(null);
+				setFoodMarkers(null);
+
+			} else if (type === 'carpark') { // 주차장 카테고리가 클릭됐을 때
+
+				// 주차장 카테고리를 선택된 스타일로 변경하고
+				coffeeMenu.className = '';
+				storeMenu.className = '';
+				carparkMenu.className = 'menu_selected';
+				waterMenu.className = '';
+				foodMenu.className = '';
+
+				// 주차장 마커들만 지도에 표시하도록 설정합니다
+				setCoffeeMarkers(null);
+				setStoreMarkers(null);
+				setCarparkMarkers(map);
+				setWaterMarkers(null);
+				setFoodMarkers(null);
+			} else if (type === 'water') { // 주차장 카테고리가 클릭됐을 때
+
+				// 주차장 카테고리를 선택된 스타일로 변경하고
+				coffeeMenu.className = '';
+				storeMenu.className = '';
+				carparkMenu.className = '';
+				waterMenu.className = 'menu_selected';
+				foodMenu.className = '';
+
+				// 주차장 마커들만 지도에 표시하도록 설정합니다
+				setCoffeeMarkers(null);
+				setStoreMarkers(null);
+				setCarparkMarkers(null);
+				setWaterMarkers(map);
+				setFoodMarkers(null);
+			} else if (type === 'food') { // 주차장 카테고리가 클릭됐을 때
+
+				// 주차장 카테고리를 선택된 스타일로 변경하고
+				coffeeMenu.className = '';
+				storeMenu.className = '';
+				carparkMenu.className = '';
+				waterMenu.className = '';
+				foodMenu.className = 'menu_selected';
+
+				// 주차장 마커들만 지도에 표시하도록 설정합니다
+				setCoffeeMarkers(null);
+				setStoreMarkers(null);
+				setCarparkMarkers(null);
+				setWaterMarkers(null);
+				setFoodMarkers(map);
+
+			}
+		}
+	</script>
+</body>
+</html>
